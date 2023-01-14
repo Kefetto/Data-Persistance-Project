@@ -25,13 +25,16 @@ public class MainManager : MonoBehaviour
     public Text recordScore;
     public string playerName;
     public int score;
+    public int bestScore;
+    public string playerNameSaved;
 
-    
 
     // Start is called before the first frame update
     void Start()
     {
         Instance = this;
+
+        playerName = MenuHandler.playerNameMenu;
 
         UpdateRecordScore();
 
@@ -49,6 +52,7 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
     }
 
     private void Update()
@@ -73,18 +77,25 @@ public class MainManager : MonoBehaviour
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
+
+        LoadSave();
+
+        Debug.Log(playerName + score);
+
     }
 
     void AddPoint(int point)
     {
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
+        
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        SaveNameAndScore(playerName, m_Points);
     }
 
     [System.Serializable]
@@ -94,21 +105,29 @@ public class MainManager : MonoBehaviour
         public int score;
     }
 
-    public void SaveNameAndScore()
+    public void SaveNameAndScore(string plName, int scoreNow)
     {
         SaveDataName SavingData = new SaveDataName();
-        SavingData.playName = playerName;
-        SavingData.score = m_Points;
+        LoadSave();
 
-        string json = JsonUtility.ToJson(SavingData);
+        Debug.Log(bestScore + "AND" + playerNameSaved);
 
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        if (m_Points > bestScore)
+        {
+            SavingData.playName = plName;
+            SavingData.score = scoreNow;
+            string json = JsonUtility.ToJson(SavingData);
+
+            File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        }
+
     }
 
     public void UpdateRecordScore()
     {
         LoadSave();
-        recordScore.text = "Best Score : " + playerName +" : " +  score;
+
+        recordScore.text = "Best Score : " + playerNameSaved +" : " +  bestScore;
     }
 
     public void LoadSave()
@@ -119,9 +138,14 @@ public class MainManager : MonoBehaviour
             string json = File.ReadAllText(path);
             SaveDataName SavingData = JsonUtility.FromJson<SaveDataName>(json);
 
-            playerName = SavingData.playName;
-            score = SavingData.score;
-            Debug.Log(playerName + score);
+            playerNameSaved = SavingData.playName;
+            bestScore = SavingData.score;
+
+            Debug.Log(playerNameSaved + bestScore);
+
         }
+
+
     }
+
 }
